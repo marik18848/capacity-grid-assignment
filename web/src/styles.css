@@ -1,11 +1,23 @@
 :root {
   color-scheme: light dark;
   font-family: ui-sans-serif, system-ui, sans-serif;
+
+  --bg: light-dark(#fff, #16181d);
+  --muted: light-dark(#667085, #98a2b3);
+  --line: light-dark(#e4e7ec, #2e323b);
+  --header-bg: light-dark(#f9fafb, #1d2027);
+  --meter: light-dark(#7a9cc6, #5b7fae);
+  --full-bg: light-dark(#eef4fb, #1e2a3a);
+  --over-bg: light-dark(#fde5e2, #4a1f1c);
+  --over-fg: light-dark(#b42318, #ffb4ab);
+  --current: light-dark(#175cd3, #84adff);
+  --skeleton: light-dark(#eaecf0, #262a33);
 }
 
 body {
   margin: 0;
   padding: 2rem;
+  background: var(--bg);
 }
 
 h1 {
@@ -19,24 +31,19 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-table {
-  border-collapse: collapse;
-  font-variant-numeric: tabular-nums;
+button,
+input {
+  font: inherit;
 }
 
-th,
-td {
-  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-}
+/* Range controls */
 
 .range-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem 1.25rem;
-  margin: 0.75rem 0 1.5rem;
+  margin: 0.75rem 0 1.25rem;
 }
 
 .range-controls .range {
@@ -55,7 +62,178 @@ td {
   font-size: 0.9rem;
 }
 
-button,
-input {
-  font: inherit;
+/* Toolbar */
+
+.grid-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.grid-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.grid-summary {
+  margin: 0;
+  color: var(--muted);
+}
+
+.grid-summary strong {
+  color: var(--over-fg);
+}
+
+/* Grid */
+
+.grid-scroll {
+  width: fit-content;
+  max-width: 100%;
+  max-height: calc(100vh - 13rem);
+  overflow: auto;
+  border: 1px solid var(--line);
+  transition: opacity 0.15s;
+}
+
+/* Delay the dim so quick loads don't flicker. */
+.grid-scroll.is-stale {
+  opacity: 0.55;
+  transition-delay: 0.2s;
+}
+
+.grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+
+.grid th,
+.grid td {
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 0.4rem 0.6rem;
+  white-space: nowrap;
+}
+
+.grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--header-bg);
+  font-weight: 600;
+  text-align: right;
+}
+
+.grid .col-person {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 12rem;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--bg);
+  font-weight: 500;
+  text-align: start;
+}
+
+.grid thead .col-person {
+  z-index: 3;
+  background: var(--header-bg);
+}
+
+.grid .col-capacity {
+  text-align: right;
+  color: var(--muted);
+  border-right: 2px solid var(--line);
+}
+
+.grid .col-week {
+  min-width: 4.5rem;
+}
+
+.grid .col-week.is-current {
+  color: var(--current);
+  box-shadow: inset 0 -2px var(--current);
+}
+
+.cell {
+  text-align: right;
+  /* A thin meter along the bottom shows how full the week is. */
+  background-image: linear-gradient(var(--meter), var(--meter));
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: var(--fill, 0%) 3px;
+}
+
+.cell.load-none {
+  color: var(--muted);
+  background-image: none;
+}
+
+.cell.load-full {
+  background-color: var(--full-bg);
+}
+
+.cell.load-over {
+  background-color: var(--over-bg);
+  background-image: none;
+  color: var(--over-fg);
+  font-weight: 600;
+}
+
+.over-by {
+  margin-left: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* States */
+
+.grid-message {
+  padding: 1rem;
+  color: var(--muted);
+}
+
+.grid-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--over-fg);
+  color: inherit;
+}
+
+.grid-error p {
+  margin: 0;
+}
+
+.grid-skeleton {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.skeleton-row {
+  height: 2rem;
+  border-radius: 4px;
+  background: var(--skeleton);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-row {
+    animation: none;
+  }
 }

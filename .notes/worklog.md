@@ -34,3 +34,14 @@ left unfinished. Append as you go; a line or two per entry is right.
 - **Date maths is done on 'YYYY-MM-DD' strings in UTC**, so the viewer's timezone can't shift a week boundary. "Today" is the exception: it's deliberately the viewer's local date.
 - **Date labels are pinned to en-GB.** Using the browser locale produced Ukrainian month names next to English UI text in my browser.
 - **Verified in a browser:** arrows, back button, This week (7 Oct → week of 5 Oct), mid-week dates snapping, inverted range, >53 weeks, cleared input, and a garbage URL. Unit tests in `dates.test.ts` cover the same rules plus the new-year week.
+
+## 2026-10-07 — Step 4: the grid, loading and errors
+
+- **Reading a cell:** it shows hours booked. Over capacity gets a red tint and bold text plus a "+N" marker, so it doesn't rely on colour alone. Exactly full gets a light tint. Under capacity gets a thin meter along the bottom. 0 shows "–". Anything booked against 0 capacity (Eli) counts as over; the percentage tooltip is skipped because there's no ratio.
+- **Capacity shows once per row** ("Hours / week" column), not in every cell. It's constant per row, and this column becomes the edit control in step 5.
+- **Loading:** first load shows skeleton rows. Changing the range keeps the previous grid, dimmed after 200ms so fast loads don't flicker, with "Loading…" in the summary. The old range's own `weeks` drive the headers, so a stale grid is never mislabelled. The request in flight is aborted when the range changes.
+- **Fetch errors replace the grid** with the message and a Try again button, rather than keeping the old range visible under the new range's label.
+- **Error wording:** first version said "The server responded with 502" (the Vite proxy's answer when the API is down). Now 502/503/504 read as "couldn't reach the server" and other 5xx as a generic server error. Only 4xx validation messages from the API are shown verbatim, because the API's 5xx bodies are internal labels.
+- **Filters:** name search (works with accents, e.g. "sofía") and "Only over capacity", plus a count of people over capacity in the range. Cross-checked against the API: 41 people over for the default range.
+- **Perf, deferred:** 53 weeks × 500 people = 26.5k cells, and a week step takes ~0.9s including the fetch. Fine for the seed, but at thousands of people the grid needs row virtualisation (and probably server-side paging). Not done.
+- **Verified in a browser:** numbers vs the API, the stale/aria-busy state during navigation, the error state with the api container stopped, Retry after restarting it, and dark mode.
