@@ -25,3 +25,12 @@ left unfinished. Append as you go; a line or two per entry is right.
 - Editing changes capacity for **every** week, past ones included, because there's no effective-date history in the schema. Noted, not solved.
 - Concurrent edits are last-write-wins; there's no version/ETag. Deferred.
 - Verified with curl: success path, all error paths, and the capacity endpoint reflecting the change. Reset Cem back to 20 afterwards.
+
+## 2026-10-07 — Step 3: range state, navigation, URL
+
+- **The range lives in the URL** (`?from=&to=`) and is owned by `App`, using pushState plus popstate. Reload, share-a-link and browser back all work. Invalid or missing params fall back to the default.
+- **Default range kept as the scaffold's** (29 Dec 2025 – 18 Jan 2026), not "this week". The hand-written sample people (Ana, Bo, Cem, Dee, Eli) live there, and the seed ends in Jan 2027, so a "today" default stops being useful soon. A "This week" button covers the manager's real use.
+- **Ranges are always whole Mon–Sun weeks**, the same rule as the API. ←/→ shift by one week and keep the length. Editing one end only moves the other end when the range would otherwise invert or exceed 53 weeks.
+- **Date maths is done on 'YYYY-MM-DD' strings in UTC**, so the viewer's timezone can't shift a week boundary. "Today" is the exception: it's deliberately the viewer's local date.
+- **Date labels are pinned to en-GB.** Using the browser locale produced Ukrainian month names next to English UI text in my browser.
+- **Verified in a browser:** arrows, back button, This week (7 Oct → week of 5 Oct), mid-week dates snapping, inverted range, >53 weeks, cleared input, and a garbage URL. Unit tests in `dates.test.ts` cover the same rules plus the new-year week.
