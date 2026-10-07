@@ -45,3 +45,15 @@ left unfinished. Append as you go; a line or two per entry is right.
 - **Filters:** name search (works with accents, e.g. "sofía") and "Only over capacity", plus a count of people over capacity in the range. Cross-checked against the API: 41 people over for the default range.
 - **Perf, deferred:** 53 weeks × 500 people = 26.5k cells, and a week step takes ~0.9s including the fetch. Fine for the seed, but at thousands of people the grid needs row virtualisation (and probably server-side paging). Not done.
 - **Verified in a browser:** numbers vs the API, the stale/aria-busy state during navigation, the error state with the api container stopped, Retry after restarting it, and dark mode.
+
+## 2026-10-07 — Step 5: editing weekly hours
+
+- **Optimistic, with rollback.** The new value shows at once and every cell in the row reflects it. Success replaces it with the server's value plus a "Saved" note that fades. Failure reverts to the last good value and shows "N h not saved. <reason>" with Retry and dismiss. The alternative, waiting for the server, would make every edit feel slow for the rare failure; the failed state is explicit enough that nobody is misled.
+- **No refetch after saving.** Allocations don't depend on weekly_hours, and capacity per week is just weekly_hours, so the PATCH response is the only number that changes. A refetch would cost a full range query per keystroke-save and still race.
+- **Edits are an overlay (`edits.ts`), not written into the fetched data.** Each fetch records when it was *requested*, and each confirmed save records when it was *confirmed*. A confirmed edit overrides only data requested before it, and newer server data wins. This closes the "range fetch in flight while a save lands" hole. Proven in the browser: held a range response for 8s after the server answered with Ana=40, saved 30 meanwhile, and Ana stayed 30 when the stale response arrived.
+- **Out-of-order saves for one person:** each save carries a sequence number. Only the newest save clears the pending state or reports failure. An older save's success still records the confirmed value, so a rollback goes to the true last-saved value. The server itself is last-write-wins (deferred: ETag/version).
+- **Editor:** click the hours to edit. Enter saves, Escape cancels, blur saves (or discards invalid input). Client-side validation matches the API (0–168, comma allowed as a decimal separator), so bad input never makes a request. Focus returns to the button after Enter/Escape.
+- **Bug caught in the browser:** pressing Enter saved, moved focus to the button, and the same keypress then "clicked" it, reopening the editor. Fixed with preventDefault on Enter.
+- **Layout fix:** "Saved" used to sit on its own line, and after fading it still took up space, leaving that row taller. Status now sits inline next to the number; only the failure message wraps below.
+- **Known gap:** with "Only over capacity" on, a person you just fixed drops out of the list mid-edit. Arguably correct, but jarring. Not addressed.
+- Restored Ana (40) and Cem (20) in the DB after manual testing.

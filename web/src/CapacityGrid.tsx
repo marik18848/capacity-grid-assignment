@@ -2,7 +2,10 @@ import { type CSSProperties, memo, useDeferredValue, useMemo, useState } from 'r
 import type { PersonCapacity } from './api'
 import { formatHours, loadOf, utilisation, weeksOver } from './capacity'
 import { startOfWeek, todayISO } from './dates'
+import { type PersonEdit, effectiveHours } from './edits'
+import { HoursEditor } from './HoursEditor'
 import { useCapacity } from './useCapacity'
+import { useWeeklyHoursEdits } from './useWeeklyHoursEdits'
 
 type Props = {
   from: string
@@ -21,12 +24,21 @@ function utc(iso: string): Date {
 // flagged in colour and with a +N marker, so over-allocation reads without
 // relying on colour alone.
 export function CapacityGrid({ from, to }: Props) {
-  const { data, loading, error, retry } = useCapacity(from, to)
+  const { data, requestedAt, loading, error, retry } = useCapacity(from, to)
+  const { edits, save, dismiss } = useWeeklyHoursEdits()
   const [query, setQuery] = useState('')
   const [onlyOver, setOnlyOver] = useState(false)
   const deferredQuery = useDeferredValue(query)
 
-  const people = useMemo(() => data?.people ?? [], [data])
+  // Rows nobody edited keep their identity, so memoised rows skip re-rendering.
+  const people = useMemo(
+    () =>
+      (data?.people ?? []).map((p) => {
+        const weeklyHours = effectiveHours(p.weeklyHours, edits[p.id], requestedAt)
+        return weeklyHours === p.weeklyHours ? p : { ...p, weeklyHours }
+      }),
+    [data, edits, requestedAt],
+  )
   const overCount = useMemo(() => people.filter((p) => weeksOver(p.allocated, p.weeklyHours) > 0).length, [people])
   const visible = useMemo(() => {
     const q = deferredQuery.trim().toLocaleLowerCase()
@@ -102,7 +114,7 @@ export function CapacityGrid({ from, to }: Props) {
           </thead>
           <tbody>
             {visible.map((p) => (
-              <Row key={p.id} person={p} />
+              <Row key={p.id} person={p} edit={edits[p.id]} onSave={save} onDismiss={dismiss} />
             ))}
           </tbody>
         </table>
@@ -116,14 +128,23 @@ export function CapacityGrid({ from, to }: Props) {
   )
 }
 
-const Row = memo(function Row({ person }: { person: PersonCapacity }) {
+type RowProps = {
+  person: PersonCapacity
+  edit: PersonEdit | undefined
+  onSave: (id: number, weeklyHours: number) => void
+  onDismiss: (id: number) => void
+}
+
+const Row = memo(function Row({ person, edit, onSave, onDismiss }: RowProps) {
   const capacity = person.weeklyHours
   return (
     <tr>
       <th scope="row" className="col-person">
         <span dir="auto">{person.name}</span>
       </th>
-      <td className="col-capacity">{formatHours(capacity)}</td>
+      <td className="col-capacity">
+        <HoursEditor person={person} edit={edit} onSave={onSave} onDismiss={onDismiss} />
+      </td>
       {person.allocated.map((allocated, i) => (
         <Cell key={i} allocated={allocated} capacity={capacity} />
       ))}
