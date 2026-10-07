@@ -57,3 +57,13 @@ left unfinished. Append as you go; a line or two per entry is right.
 - **Layout fix:** "Saved" used to sit on its own line, and after fading it still took up space, leaving that row taller. Status now sits inline next to the number; only the failure message wraps below.
 - **Known gap:** with "Only over capacity" on, a person you just fixed drops out of the list mid-edit. Arguably correct, but jarring. Not addressed.
 - Restored Ana (40) and Cem (20) in the DB after manual testing.
+
+## 2026-10-07 — Step 6: tests
+
+- 31 Vitest tests, aimed at the parts I'd be nervous to change rather than at coverage:
+  - `edits.test.ts`: the overlay reducer. Rollback target, out-of-order successes and failures, and stale-fetch vs fresh-fetch precedence.
+  - `capacity.test.ts`: cell classification, including 0 capacity and float drift.
+  - `dates.test.ts`: week snapping, the new-year week, range limits.
+  - `CapacityGrid.test.tsx`: one component test against a mocked fetch covering edit → optimistic → server 500 → rollback with message → Retry → applied, plus "invalid input is never sent" and the load-error retry.
+- **Mutation-checked:** removing the requestedAt comparison or the stale-sequence guard each fails a test.
+- **Not covered by tests:** the Enter-reopens-editor bug from step 5. jsdom's fireEvent doesn't run the browser's default key activation, so a test there would pass with or without the fix; it was verified in a real browser only. There are no Go tests either: the API was verified by diffing every cell against an independent calculation from seed.sql (see step 1), and that script isn't in the repo.
