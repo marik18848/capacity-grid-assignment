@@ -331,3 +331,18 @@ input {
     opacity: 0;
   }
 }
+
+@media (max-width: 640px) {
+  body {
+    padding: 1rem;
+  }
+
+  .grid .col-person {
+    min-width: 7rem;
+    max-width: 9rem;
+  }
+
+  .grid td.col-capacity {
+    min-width: 4.5rem;
+  }
+}

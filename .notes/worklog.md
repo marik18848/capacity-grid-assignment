@@ -67,3 +67,19 @@ left unfinished. Append as you go; a line or two per entry is right.
   - `CapacityGrid.test.tsx`: one component test against a mocked fetch covering edit → optimistic → server 500 → rollback with message → Retry → applied, plus "invalid input is never sent" and the load-error retry.
 - **Mutation-checked:** removing the requestedAt comparison or the stale-sequence guard each fails a test.
 - **Not covered by tests:** the Enter-reopens-editor bug from step 5. jsdom's fireEvent doesn't run the browser's default key activation, so a test there would pass with or without the fix; it was verified in a real browser only. There are no Go tests either: the API was verified by diffing every cell against an independent calculation from seed.sql (see step 1), and that script isn't in the repo.
+
+## 2026-10-07 — Step 7: final look
+
+- **Data pattern, left as-is:** every third week the whole team has 0h booked (16 Jun, 7 Jul … 12 Oct, 2 Nov, 14 Dec). Bulk assignments start every 21 days and last ≤14 days, so it's a property of how the seed was generated, not a query bug (the API matched an independent calculation cell for cell). A real manager would ask about it; the grid shows it honestly as a column of "–".
+- **Other data notes:** the peak is 45h (Dee, overlapping projects). The worst ratio is 40h against 20h capacity. Every weekly sum is a whole number once the split rows are added up.
+- **Sort order is Postgres en_US.utf8 collation:** Latin names first, then Greek, Cyrillic, Hebrew, Arabic, CJK and Korean. Acceptable; a locale-aware client-side sort would be a later choice.
+- **Narrow screens:** the 12rem name column plus page padding left no room for weeks on a phone. Tightened under 640px; weeks scroll sideways inside the grid and the page never scrolls horizontally.
+- **Checked:** DB weekly_hours match the seed for all 500 people after manual testing. tsc is clean and 31/31 tests pass.
+
+### Left unfinished / would do next
+- Row virtualisation and server paging for thousands of people (26.5k cells at 53 weeks is ~0.9s per step today).
+- weekly_hours has no history: an edit rewrites capacity for past weeks too. Needs effective-dated capacity.
+- No holidays or time off: 1 Jan counts as a working day.
+- Last-write-wins on concurrent edits; no ETag/version check.
+- "Only over capacity" drops a row the moment an edit fixes it.
+- No Go tests; the API correctness check was a one-off script.
